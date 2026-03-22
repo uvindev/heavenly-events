@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id              Int               @id @default(autoincrement())
+  slug            String            @unique @db.VarChar(255)
+  title           String            @db.VarChar(255)
+  description     String            @db.LongText
+  shortDesc       String?           @db.VarChar(500) @map("short_desc")
+  category        EventCategory
+  status          EventStatus       @default(DRAFT)
+  isPublic        Boolean           @default(true) @map("is_public")
+  isClientEvent   Boolean           @default(false) @map("is_client_event")
+  clientName      String?           @db.VarChar(255) @map("client_name")
+  eventDate       DateTime          @map("event_date")
+  eventEndDate    DateTime?         @map("event_end_date")
+  doorsOpenTime   DateTime?         @map("doors_open_time")
+  registrationDeadline DateTime?    @map("registration_deadline")
+  venueName       String            @db.VarChar(255) @map("venue_name")
+  venueAddress    String            @db.VarChar(500) @map("venue_address")
+  venueCity       String            @db.VarChar(100) @map("venue_city")
+  googleMapsUrl   String?           @db.VarChar(1000) @map("google_maps_url")
+  googleMapsEmbed String?           @db.VarChar(2000) @map("google_maps_embed")
+  latitude        Decimal?          @db.Decimal(10, 8)
+  longitude       Decimal?          @db.Decimal(11, 8)
+  coverImage      String?           @db.VarChar(500) @map("cover_image")
+  coverImageAlt   String?           @db.VarChar(255) @map("cover_image_alt")
+  primaryColor    String?           @db.VarChar(7) @map("primary_color")
+  secondaryColor  String?           @db.VarChar(7) @map("secondary_color")
+  accentColor     String?           @db.VarChar(7) @map("accent_color")
+  maxCapacity     Int?              @map("max_capacity")
+  registrationCount Int            @default(0) @map("registration_count")
+  requiresApproval Boolean         @default(false) @map("requires_approval")
+  facebookUrl     String?           @db.VarChar(500) @map("facebook_url")
+  visitorFormSchema  Json?          @map("visitor_form_schema")
+  exhibitorFormSchema Json?         @map("exhibitor_form_schema")
+  metaTitle       String?           @db.VarChar(70) @map("meta_title")
+  metaDesc        String?           @db.VarChar(160) @map("meta_desc")
+  ogImage         String?           @db.VarChar(500) @map("og_image")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  publishedAt     DateTime?         @map("published_at")
+  registrations   Registration[]
+  galleryItems    GalleryItem[]
+  eventSponsors   EventSponsor[]
+  schedule        EventSchedule[]
+  @@map("events")
+}
+
+enum EventCategory {
+  CORPORATE
+  WEDDING
+  BIRTHDAY
+  CONCERT
+  PRIVATE
+  GALA
+  CONFERENCE
+  CULTURAL
+  CLIENT_EVENT
+  EDUCATION_FAIR
+  TRADE_EXPO
+  HEALTH_EXPO
+  WEDDING_SHOW
+  OTHER
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+model Registration {
+  id              Int               @id @default(autoincrement())
+  ticketId        String            @unique @default(cuid()) @map("ticket_id")
+  qrCode          String?           @db.Text @map("qr_code")
+  registrationType RegistrationType @default(VISITOR) @map("registration_type")
+  fullName        String            @db.VarChar(255) @map("full_name")
+  email           String            @db.VarChar(255)
+  phone           String            @db.VarChar(20)
+  additionalNotes String?           @db.Text @map("additional_notes")
+  companyName     String?           @db.VarChar(255) @map("company_name")
+  companyPhone    String?           @db.VarChar(20) @map("company_phone")
+  companyWebsite  String?           @db.VarChar(500) @map("company_website")
+  businessCategory String?          @db.VarChar(100) @map("business_category")
+  boothSize       String?           @db.VarChar(50) @map("booth_size")
+  exhibitorMessage String?          @db.Text @map("exhibitor_message")
+  formResponses   Json?             @map("form_responses")
+  status          RegistrationStatus @default(PENDING)
+  checkedIn       Boolean           @default(false) @map("checked_in")
+  checkedInAt     DateTime?         @map("checked_in_at")
+  emailSent       Boolean           @default(false) @map("email_sent")
+  emailSentAt     DateTime?         @map("email_sent_at")
+  utmSource       String?           @db.VarChar(100) @map("utm_source")
+  utmMedium       String?           @db.VarChar(100) @map("utm_medium")
+  utmCampaign     String?           @db.VarChar(100) @map("utm_campaign")
+  fbclid          String?           @db.VarChar(255)
+  gclid           String?           @db.VarChar(255)
+  ipAddress       String?           @db.VarChar(45) @map("ip_address")
+  userAgent       String?           @db.VarChar(500) @map("user_agent")
+  referrer        String?           @db.VarChar(500)
+  reviewedBy      Int?              @map("reviewed_by")
+  reviewedAt      DateTime?         @map("reviewed_at")
+  reviewNotes     String?           @db.VarChar(500) @map("review_notes")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  eventId         Int               @map("event_id")
+  event           Event             @relation(fields: [eventId], references: [id])
+  @@index([eventId])
+  @@index([email])
+  @@index([ticketId])
+  @@map("registrations")
+}
+
+enum RegistrationType {
+  VISITOR
+  EXHIBITOR
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model GalleryItem {
+  id              Int               @id @default(autoincrement())
+  filename        String            @db.VarChar(500)
+  altText         String            @db.VarChar(255) @map("alt_text")
+  caption         String?           @db.VarChar(500)
+  category        GalleryCategory
+  featured        Boolean           @default(false)
+  sortOrder       Int               @default(0) @map("sort_order")
+  width           Int?
+  height          Int?
+  blurDataUrl     String?           @db.Text @map("blur_data_url")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  eventId         Int?              @map("event_id")
+  event           Event?            @relation(fields: [eventId], references: [id])
+  @@map("gallery_items")
+}
+
+enum GalleryCategory {
+  CORPORATE
+  WEDDING
+  BIRTHDAY
+  CONCERT
+  PRIVATE
+  GALA
+  BEHIND_SCENES
+}
+
+model Sponsor {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  logoUrl         String            @db.VarChar(500) @map("logo_url")
+  logoAlt         String            @db.VarChar(255) @map("logo_alt")
+  websiteUrl      String?           @db.VarChar(500) @map("website_url")
+  tier            SponsorTier       @default(STANDARD)
+  isActive        Boolean           @default(true) @map("is_active")
+  sortOrder       Int               @default(0) @map("sort_order")
+  description     String?           @db.VarChar(500)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  eventSponsors   EventSponsor[]
+  @@map("sponsors")
+}
+
+model EventSponsor {
+  id              Int               @id @default(autoincrement())
+  eventId         Int               @map("event_id")
+  sponsorId       Int               @map("sponsor_id")
+  tier            SponsorTier       @default(STANDARD)
+  event           Event             @relation(fields: [eventId], references: [id])
+  sponsor         Sponsor           @relation(fields: [sponsorId], references: [id])
+  @@unique([eventId, sponsorId])
+  @@map("event_sponsors")
+}
+
+enum SponsorTier {
+  PLATINUM
+  GOLD
+  SILVER
+  STANDARD
+}
+
+model AdminUser {
+  id              Int               @id @default(autoincrement())
+  email           String            @unique @db.VarChar(255)
+  passwordHash    String            @db.VarChar(255) @map("password_hash")
+  fullName        String            @db.VarChar(255) @map("full_name")
+  role            AdminRole         @default(EDITOR)
+  isActive        Boolean           @default(true) @map("is_active")
+  mustChangePassword Boolean        @default(true) @map("must_change_password")
+  lastLoginAt     DateTime?         @map("last_login_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  @@map("admin_users")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+model EventSchedule {
+  id              Int               @id @default(autoincrement())
+  eventId         Int               @map("event_id")
+  time            String            @db.VarChar(20)
+  title           String            @db.VarChar(255)
+  description     String?           @db.VarChar(500)
+  sortOrder       Int               @default(0) @map("sort_order")
+  event           Event             @relation(fields: [eventId], references: [id])
+  @@map("event_schedule")
+}
+
+model Inquiry {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  email           String            @db.VarChar(255)
+  phone           String?           @db.VarChar(20)
+  eventType       String?           @db.VarChar(100) @map("event_type")
+  eventDate       DateTime?         @map("event_date")
+  guestCount      String?           @db.VarChar(50) @map("guest_count")
+  budget          String?           @db.VarChar(100)
+  message         String            @db.Text
+  status          InquiryStatus     @default(NEW)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  @@map("inquiries")
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  CONFIRMED
+  CLOSED
+}
+
+model BlogPost {
+  id              Int               @id @default(autoincrement())
+  title           String            @db.VarChar(255)
+  slug            String            @unique @db.VarChar(255)
+  excerpt         String?           @db.VarChar(500)
+  content         String            @db.LongText
+  coverImage      String?           @db.VarChar(500) @map("cover_image")
+  category        String            @db.VarChar(100)
+  tags            String?           @db.VarChar(500)
+  author          String            @db.VarChar(255)
+  status          BlogStatus        @default(DRAFT)
+  metaTitle       String?           @db.VarChar(70) @map("meta_title")
+  metaDesc        String?           @db.VarChar(160) @map("meta_desc")
+  publishedAt     DateTime?         @map("published_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  @@map("blog_posts")
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model SiteSetting {
+  id              Int               @id @default(autoincrement())
+  key             String            @unique @db.VarChar(100)
+  value           String            @db.Text
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  @@map("site_settings")
+}

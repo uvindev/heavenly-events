@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src=no --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(rm -rf \"d:/UvinDev/heavenly_events_temp\")",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(ls D:/UvinDev/heavenly_events/app/events/[slug]/)",
+      "Bash(node -e \"const z = require\\(''zod''\\); console.log\\(z.string\\(\\).min.toString\\(\\).substring\\(0, 100\\)\\)\")",
+      "Bash(node -e \"const z = require\\(''zod''\\); const s = z.object\\({a: z.string\\(\\).min\\(2, ''too short''\\)}\\); console.log\\(s.safeParse\\({a: ''x''}\\)\\);\")",
+      "Bash(node -e \"const z = require\\(''zod''\\); const s = z.string\\(\\).regex\\(/^a/,''msg''\\); console.log\\(typeof s\\);\")",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const z = require\\(''zod''\\); console.log\\(z.record.length\\); const r = z.record\\(z.string\\(\\), z.unknown\\(\\)\\); console.log\\(typeof r\\);\")",
+      "Bash(npx prisma:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(npx eslint:*)",
+      "Bash(grep -n 'bg-gradient-t' app/admin/checkin/[eventId]/page.tsx app/admin/dashboard/page.tsx app/admin/layout.tsx app/admin/login/page.tsx app/admin/sponsors/page.tsx app/ticket/[ticketId]/loading.tsx components/admin/AdminSidebar.tsx components/gallery/GalleryGrid.tsx)",
+      "Bash(grep -v '\\\\.map\\\\|\\\\.js$')",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5000)"
+    ]
+  }
+}
