@@ -25,7 +25,7 @@ interface RegistrationFormProps {
 const visitorSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Enter a valid email address'),
-  phone: z.string().min(9, 'Enter a valid phone number').regex(/^[+]?[\d\s()-]+$/, 'Enter a valid phone number'),
+  phone: z.string().min(9, 'Enter a valid phone number').max(20),
   additionalNotes: z.string().optional(),
   formResponses: z.record(z.string(), z.unknown()).optional(),
 });
@@ -33,7 +33,7 @@ const visitorSchema = z.object({
 const exhibitorSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Enter a valid email address'),
-  phone: z.string().min(9, 'Enter a valid phone number').regex(/^[+]?[\d\s()-]+$/, 'Enter a valid phone number'),
+  phone: z.string().min(9, 'Enter a valid phone number').max(20),
   companyName: z.string().min(2, 'Company name is required'),
   companyPhone: z.string().optional(),
   companyWebsite: z.string().optional(),

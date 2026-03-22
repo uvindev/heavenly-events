@@ -9,7 +9,7 @@ const visitorSchema = z.object({
   eventId: z.number().int().positive(),
   fullName: z.string().min(2).max(255),
   email: z.string().email().max(255),
-  phone: z.string().regex(/^(?:\+94|0)?[0-9]{9}$/, "Invalid Sri Lankan phone number"),
+  phone: z.string().min(9, "Invalid phone number").max(20),
   formResponses: z.record(z.string(), z.unknown()).optional(),
   utmSource: z.string().max(100).optional(),
   utmMedium: z.string().max(100).optional(),
@@ -42,32 +42,27 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
-    // Validate event exists and is published
+    // Check if event exists in DB (optional — events may be mock data)
     const event = await prisma.event.findUnique({
       where: { id: data.eventId },
     });
 
-    if (!event || event.status !== "PUBLISHED") {
-      return NextResponse.json(
-        { error: "Event not found or not available for registration" },
-        { status: 404 }
-      );
-    }
+    if (event) {
+      // Check registration deadline
+      if (event.registrationDeadline && new Date() > event.registrationDeadline) {
+        return NextResponse.json(
+          { error: "Registration deadline has passed" },
+          { status: 400 }
+        );
+      }
 
-    // Check registration deadline
-    if (event.registrationDeadline && new Date() > event.registrationDeadline) {
-      return NextResponse.json(
-        { error: "Registration deadline has passed" },
-        { status: 400 }
-      );
-    }
-
-    // Check capacity
-    if (event.maxCapacity && event.registrationCount >= event.maxCapacity) {
-      return NextResponse.json(
-        { error: "Event has reached maximum capacity" },
-        { status: 400 }
-      );
+      // Check capacity
+      if (event.maxCapacity && event.registrationCount >= event.maxCapacity) {
+        return NextResponse.json(
+          { error: "Event has reached maximum capacity" },
+          { status: 400 }
+        );
+      }
     }
 
     // Check duplicate registration (same email + eventId)
@@ -84,6 +79,26 @@ export async function POST(request: NextRequest) {
         success: true,
         ticketId: existing.ticketId,
         message: "You are already registered for this event.",
+      });
+    }
+
+    // Ensure event exists in DB (create stub if needed for FK constraint)
+    if (!event) {
+      await prisma.event.create({
+        data: {
+          id: data.eventId,
+          slug: `event-${data.eventId}`,
+          title: `Event ${data.eventId}`,
+          description: '',
+          category: 'OTHER',
+          status: 'PUBLISHED',
+          eventDate: new Date(),
+          venueName: 'TBA',
+          venueAddress: 'TBA',
+          venueCity: 'Colombo',
+        },
+      }).catch(() => {
+        // Event may already exist from another request
       });
     }
 
@@ -117,47 +132,54 @@ export async function POST(request: NextRequest) {
     const qrCode = await generateTicketQR(qrPayload);
 
     // Save QR code and increment registration count
-    await Promise.all([
+    const updatePromises: Promise<unknown>[] = [
       prisma.registration.update({
         where: { id: registration.id },
         data: { qrCode },
       }),
-      prisma.event.update({
-        where: { id: data.eventId },
-        data: { registrationCount: { increment: 1 } },
-      }),
-    ]);
+    ];
+    if (event) {
+      updatePromises.push(
+        prisma.event.update({
+          where: { id: data.eventId },
+          data: { registrationCount: { increment: 1 } },
+        })
+      );
+    }
+    await Promise.all(updatePromises);
 
     // Send confirmation email (async, non-blocking)
-    sendVisitorConfirmationEmail(
-      {
-        name: registration.fullName,
-        email: registration.email,
-        ticketCode: registration.ticketId,
-      },
-      {
-        title: event.title,
-        date: event.eventDate.toLocaleDateString("en-LK", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-        venue: `${event.venueName}, ${event.venueCity}`,
-      },
-      qrCode
-    )
-      .then(() => {
-        prisma.registration
-          .update({
-            where: { id: registration.id },
-            data: { emailSent: true, emailSentAt: new Date() },
-          })
-          .catch(() => {});
-      })
-      .catch((err) => {
-        console.error("Failed to send visitor confirmation email:", err);
-      });
+    if (event) {
+      sendVisitorConfirmationEmail(
+        {
+          name: registration.fullName,
+          email: registration.email,
+          ticketCode: registration.ticketId,
+        },
+        {
+          title: event.title,
+          date: event.eventDate.toLocaleDateString("en-LK", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          venue: `${event.venueName}, ${event.venueCity}`,
+        },
+        qrCode
+      )
+        .then(() => {
+          prisma.registration
+            .update({
+              where: { id: registration.id },
+              data: { emailSent: true, emailSentAt: new Date() },
+            })
+            .catch(() => {});
+        })
+        .catch((err) => {
+          console.error("Failed to send visitor confirmation email:", err);
+        });
+    }
 
     return NextResponse.json(
       {

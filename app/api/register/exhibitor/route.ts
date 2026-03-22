@@ -6,16 +6,21 @@ import { rateLimit } from "@/lib/rateLimit";
 
 const exhibitorSchema = z.object({
   eventId: z.number().int().positive(),
-  contactName: z.string().min(2).max(255),
-  contactPhone: z.string().regex(/^(?:\+94|0)?[0-9]{9}$/, "Invalid Sri Lankan phone number"),
-  contactEmail: z.string().email().max(255),
+  fullName: z.string().min(2).max(255),
+  phone: z.string().min(9, "Invalid phone number").max(20),
+  email: z.string().email().max(255),
   companyName: z.string().min(2).max(255),
-  boothSize: z.string().min(1).max(50),
-  message: z.string().min(1).max(2000),
+  boothSize: z.string().max(50).optional(),
+  exhibitorMessage: z.string().max(2000).optional(),
   companyPhone: z.string().max(20).optional(),
-  companyWebsite: z.string().url().max(500).optional().or(z.literal("")),
+  companyWebsite: z.string().max(500).optional(),
   businessCategory: z.string().max(100).optional(),
   formResponses: z.record(z.string(), z.unknown()).optional(),
+  utmSource: z.string().max(100).optional(),
+  utmMedium: z.string().max(100).optional(),
+  utmCampaign: z.string().max(100).optional(),
+  fbclid: z.string().max(255).optional(),
+  gclid: z.string().max(255).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -42,22 +47,15 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
-    // Validate event exists and is published
+    // Check if event exists in DB
     const event = await prisma.event.findUnique({
       where: { id: data.eventId },
     });
 
-    if (!event || event.status !== "PUBLISHED") {
-      return NextResponse.json(
-        { error: "Event not found or not available for registration" },
-        { status: 404 }
-      );
-    }
-
     // Check duplicate exhibitor registration
     const existing = await prisma.registration.findFirst({
       where: {
-        email: data.contactEmail,
+        email: data.email,
         eventId: data.eventId,
         registrationType: "EXHIBITOR",
       },
@@ -70,21 +68,39 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create registration with PENDING status (admin approves first, no QR yet)
+    // Ensure event exists in DB (create stub if needed for FK constraint)
+    if (!event) {
+      await prisma.event.create({
+        data: {
+          id: data.eventId,
+          slug: `event-${data.eventId}`,
+          title: `Event ${data.eventId}`,
+          description: '',
+          category: 'OTHER',
+          status: 'PUBLISHED',
+          eventDate: new Date(),
+          venueName: 'TBA',
+          venueAddress: 'TBA',
+          venueCity: 'Colombo',
+        },
+      }).catch(() => {});
+    }
+
+    // Create registration with PENDING status
     const registration = await prisma.registration.create({
       data: {
         eventId: data.eventId,
-        fullName: data.contactName,
-        email: data.contactEmail,
-        phone: data.contactPhone,
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
         registrationType: "EXHIBITOR",
         status: "PENDING",
         companyName: data.companyName,
         companyPhone: data.companyPhone || null,
         companyWebsite: data.companyWebsite || null,
         businessCategory: data.businessCategory || null,
-        boothSize: data.boothSize,
-        exhibitorMessage: data.message,
+        boothSize: data.boothSize || null,
+        exhibitorMessage: data.exhibitorMessage || null,
         formResponses: data.formResponses ? JSON.parse(JSON.stringify(data.formResponses)) : undefined,
         ipAddress: ip,
         userAgent: request.headers.get("user-agent")?.substring(0, 500) || null,
@@ -92,48 +108,49 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send exhibitor interest received email (async, non-blocking)
-    sendExhibitorInterestEmail(
-      {
-        name: registration.fullName,
-        email: registration.email,
-        companyName: data.companyName,
-      },
-      {
-        title: event.title,
-        date: event.eventDate.toLocaleDateString("en-LK", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-        venue: `${event.venueName}, ${event.venueCity}`,
-      }
-    )
-      .then(() => {
-        prisma.registration
-          .update({
-            where: { id: registration.id },
-            data: { emailSent: true, emailSentAt: new Date() },
-          })
-          .catch(() => {});
-      })
-      .catch((err) => {
-        console.error("Failed to send exhibitor interest email:", err);
-      });
+    // Send emails if event exists in DB
+    if (event) {
+      sendExhibitorInterestEmail(
+        {
+          name: registration.fullName,
+          email: registration.email,
+          companyName: data.companyName,
+        },
+        {
+          title: event.title,
+          date: event.eventDate.toLocaleDateString("en-LK", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          venue: `${event.venueName}, ${event.venueCity}`,
+        }
+      )
+        .then(() => {
+          prisma.registration
+            .update({
+              where: { id: registration.id },
+              data: { emailSent: true, emailSentAt: new Date() },
+            })
+            .catch(() => {});
+        })
+        .catch((err) => {
+          console.error("Failed to send exhibitor interest email:", err);
+        });
 
-    // Send admin notification (async, non-blocking)
-    sendAdminNotificationEmail(
-      `New Exhibitor Application - ${event.title}`,
-      `<p><strong>Company:</strong> ${data.companyName}</p>
-       <p><strong>Contact:</strong> ${data.contactName} (${data.contactEmail})</p>
-       <p><strong>Phone:</strong> ${data.contactPhone}</p>
-       <p><strong>Booth Size:</strong> ${data.boothSize}</p>
-       <p><strong>Message:</strong> ${data.message}</p>
-       <p><strong>Event:</strong> ${event.title}</p>`
-    ).catch((err) => {
-      console.error("Failed to send admin notification email:", err);
-    });
+      sendAdminNotificationEmail(
+        `New Exhibitor Application - ${event.title}`,
+        `<p><strong>Company:</strong> ${data.companyName}</p>
+         <p><strong>Contact:</strong> ${data.fullName} (${data.email})</p>
+         <p><strong>Phone:</strong> ${data.phone}</p>
+         <p><strong>Booth Size:</strong> ${data.boothSize || 'Not specified'}</p>
+         <p><strong>Message:</strong> ${data.exhibitorMessage || 'None'}</p>
+         <p><strong>Event:</strong> ${event.title}</p>`
+      ).catch((err) => {
+        console.error("Failed to send admin notification email:", err);
+      });
+    }
 
     return NextResponse.json(
       {
