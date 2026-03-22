@@ -3,15 +3,16 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Event {
   id              Int               @id @default(autoincrement())
   slug            String            @unique @db.VarChar(255)
   title           String            @db.VarChar(255)
-  description     String            @db.LongText
+  description     String            @db.Text
   shortDesc       String?           @db.VarChar(500) @map("short_desc")
   category        EventCategory
   status          EventStatus       @default(DRAFT)
@@ -250,7 +251,7 @@ model BlogPost {
   title           String            @db.VarChar(255)
   slug            String            @unique @db.VarChar(255)
   excerpt         String?           @db.VarChar(500)
-  content         String            @db.LongText
+  content         String            @db.Text
   coverImage      String?           @db.VarChar(500) @map("cover_image")
   category        String            @db.VarChar(100)
   tags            String?           @db.VarChar(500)
