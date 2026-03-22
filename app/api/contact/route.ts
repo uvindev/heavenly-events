@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { sendContactFormEmail, sendAdminNotificationEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rateLimit";
+export const runtime = 'nodejs';
 
 const contactSchema = z.object({
   name: z.string().min(2).max(255),

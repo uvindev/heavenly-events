@@ -46,7 +46,7 @@ function AdminLoginContent() {
           setRateLimited(true);
           setError('Too many login attempts. Please try again in 15 minutes.');
         } else {
-          setError(data.error || 'Invalid credentials');
+          setError(data.detail || data.error || 'Invalid credentials');
         }
         return;
       }

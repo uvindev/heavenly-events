@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { sendExhibitorInterestEmail, sendAdminNotificationEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rateLimit";
+export const runtime = 'nodejs';
 
 const exhibitorSchema = z.object({
   eventId: z.number().int().positive(),

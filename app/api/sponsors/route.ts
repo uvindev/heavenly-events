@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+export const runtime = 'nodejs';
 const SPONSOR_TIERS = ["PLATINUM", "GOLD", "SILVER", "BRONZE"] as const;
 
 export async function GET(request: NextRequest) {

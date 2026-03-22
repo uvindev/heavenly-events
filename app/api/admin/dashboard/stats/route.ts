@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requirePermission, isNextResponse } from '@/lib/adminAuth';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const authResult = requirePermission(request, 'events:read');

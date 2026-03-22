@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma';
 import { signJWT, comparePassword } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
 
+export const runtime = 'nodejs';
+
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
@@ -93,7 +95,8 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Login error:', error instanceof Error ? error.message : error);
+    console.error('Login error stack:', error instanceof Error ? error.stack : 'no stack');
+    return NextResponse.json({ error: 'Internal server error', detail: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }

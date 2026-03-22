@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { requireRole, isNextResponse } from '@/lib/adminAuth';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const authResult = requireRole(request, ['SUPER_ADMIN']);

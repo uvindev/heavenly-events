@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { generateTicketQR } from "@/lib/qr";
 import { sendVisitorConfirmationEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rateLimit";
+export const runtime = 'nodejs';
 
 const visitorSchema = z.object({
   eventId: z.number().int().positive(),

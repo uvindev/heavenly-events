@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { requirePermission, isNextResponse } from '@/lib/adminAuth';
+export const runtime = 'nodejs';
 
 const updateRegistrationSchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED', 'APPROVED', 'REJECTED', 'CANCELLED']).optional(),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { requirePermission, isNextResponse } from '@/lib/adminAuth';
+export const runtime = 'nodejs';
 
 const updateGallerySchema = z.object({
   altText: z.string().min(1).max(255).optional(),
