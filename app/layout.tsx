@@ -34,15 +34,64 @@ const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://heavenly-events.vercel.app';
+
 export const metadata: Metadata = {
-  title: "Heavenly Events — Sri Lanka's Premier Events Organizer",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Heavenly Events — Sri Lanka's Premier Events Organizer",
+    template: '%s | Heavenly Events',
+  },
   description:
     'With over 18 years of experience, Heavenly Events is Sri Lanka\'s premier events organizer specializing in corporate events, weddings, concerts, exhibitions, and unforgettable celebrations.',
+  keywords: ['events', 'Sri Lanka', 'exhibitions', 'weddings', 'conferences', 'event management', 'Colombo', 'BMICH'],
+  authors: [{ name: 'Heavenly Events' }],
+  creator: 'Heavenly Events',
+  publisher: 'Heavenly Events',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName: 'Heavenly Events',
+    title: "Heavenly Events — Sri Lanka's Premier Events Organizer",
+    description:
+      'With over 18 years of experience, Heavenly Events is Sri Lanka\'s premier events organizer. Corporate events, weddings, exhibitions & more.',
+    images: [
+      {
+        url: '/images/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Heavenly Events Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Heavenly Events — Sri Lanka's Premier Events Organizer",
+    description:
+      'Sri Lanka\'s premier events organizer. Corporate events, weddings, exhibitions & unforgettable celebrations.',
+    images: ['/images/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#1a56db',
 };
 
 export default function RootLayout({
