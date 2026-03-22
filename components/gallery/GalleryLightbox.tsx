@@ -66,14 +66,14 @@ export default function GalleryLightbox({
       const diffX = touch.clientX - startX;
       const diffY = touch.clientY - startY;
 
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
         if (diffX > 0) onPrev();
         else onNext();
       }
     };
 
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
@@ -83,84 +83,86 @@ export default function GalleryLightbox({
 
   if (!item) return null;
 
+  const imgSrc = item.image ? item.image.replace('w=600', 'w=1200').replace('q=80', 'q=90') : '';
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex flex-col"
       role="dialog"
       aria-modal="true"
       aria-label={`Viewing: ${item.title}`}
     >
       {/* Dark backdrop */}
       <div
-        className="absolute inset-0 bg-black/95 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/95"
         onClick={onClose}
       />
 
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
-        aria-label="Close lightbox"
-      >
-        <X className="h-5 w-5" />
-      </button>
-
-      {/* Navigation: Previous */}
-      <button
-        onClick={onPrev}
-        className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10 sm:left-6"
-        aria-label="Previous image"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-
-      {/* Navigation: Next */}
-      <button
-        onClick={onNext}
-        className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10 sm:right-6"
-        aria-label="Next image"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
-
-      {/* Image area */}
-      <div className="relative z-10 mx-16 flex max-h-[80vh] max-w-5xl flex-col items-center">
-        <div
-          className="w-full max-w-3xl overflow-hidden rounded-2xl"
-          style={{ aspectRatio: item.aspectRatio }}
+      {/* Top bar */}
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 sm:px-6">
+        <div className="text-white/50 font-mono text-sm">
+          {currentIndex + 1} / {items.length}
+        </div>
+        <button
+          onClick={onClose}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Close"
         >
-          {item.image ? (
-            <img
-              src={item.image.replace('w=600', 'w=1200')}
-              alt={item.title}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div
-              className="h-full w-full"
-              style={{ background: item.gradient }}
-            />
-          )}
-        </div>
+          <X className="h-6 w-6" />
+        </button>
+      </div>
 
-        {/* Caption */}
-        <div className="mt-6 text-center">
-          <span
-            className="font-ui text-xs font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-crimson)' }}
-          >
-            {item.category}
-          </span>
-          <h3 className="mt-1 font-display text-2xl font-bold text-white">
-            {item.title}
-          </h3>
-          <p className="mt-1 font-body text-sm text-white/50">
-            {item.event}
-          </p>
-          <p className="mt-3 font-body text-xs text-white/30">
-            {currentIndex + 1} / {items.length}
-          </p>
-        </div>
+      {/* Image area - fills remaining space */}
+      <div className="relative z-10 flex flex-1 items-center justify-center px-2 sm:px-16 pb-4 min-h-0">
+        {/* Prev button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onPrev(); }}
+          className="absolute left-2 sm:left-4 top-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white/80 transition-all hover:bg-black/70 hover:text-white"
+          aria-label="Previous image"
+        >
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+
+        {/* Next button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onNext(); }}
+          className="absolute right-2 sm:right-4 top-1/2 z-20 flex h-10 w-10 sm:h-12 sm:w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white/80 transition-all hover:bg-black/70 hover:text-white"
+          aria-label="Next image"
+        >
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+        </button>
+
+        {/* Image */}
+        {imgSrc ? (
+          <img
+            key={item.id}
+            src={imgSrc}
+            alt={item.title}
+            className="max-h-full max-w-full object-contain rounded-lg"
+            style={{ maxHeight: 'calc(100vh - 160px)' }}
+          />
+        ) : (
+          <div
+            className="w-full max-w-xl rounded-lg"
+            style={{ aspectRatio: item.aspectRatio, background: item.gradient }}
+          />
+        )}
+      </div>
+
+      {/* Caption bar */}
+      <div className="relative z-10 px-4 pb-5 sm:pb-6 text-center">
+        <span
+          className="font-ui text-[10px] sm:text-xs font-semibold uppercase tracking-wider"
+          style={{ color: '#3b82f6' }}
+        >
+          {item.category}
+        </span>
+        <h3 className="mt-1 font-display text-lg sm:text-xl font-bold text-white">
+          {item.title}
+        </h3>
+        <p className="mt-0.5 font-body text-xs sm:text-sm text-white/40">
+          {item.event}
+        </p>
       </div>
     </div>
   );
