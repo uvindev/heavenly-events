@@ -7,8 +7,8 @@ export type AdminPayload = {
   role: string;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-const JWT_EXPIRY = process.env.JWT_EXPIRY || "24h";
+const JWT_SECRET = process.env.JWT_SECRET || "heavenly-events-fallback-secret-key-change-in-production";
+const JWT_EXPIRY = process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRY || "24h";
 
 export function signJWT(payload: AdminPayload): string {
   const options: SignOptions = {

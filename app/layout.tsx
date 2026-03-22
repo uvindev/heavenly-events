@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import Analytics, { AnalyticsNoscript } from '@/components/shared/Analytics';
 import JsonLd from '@/components/shared/JsonLd';
 import { generateOrganizationJsonLd } from '@/lib/seo';
+import LayoutShell from '@/components/layout/LayoutShell';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -60,9 +59,7 @@ export default function RootLayout({
         <Analytics />
         <AnalyticsNoscript />
         <JsonLd data={generateOrganizationJsonLd()} />
-        <Navbar />
-        {children}
-        <Footer />
+        <LayoutShell>{children}</LayoutShell>
       </body>
     </html>
   );
