@@ -129,10 +129,18 @@ export default function GalleryLightbox({
           className="w-full max-w-3xl overflow-hidden rounded-2xl"
           style={{ aspectRatio: item.aspectRatio }}
         >
-          <div
-            className="h-full w-full"
-            style={{ background: item.gradient }}
-          />
+          {item.image ? (
+            <img
+              src={item.image.replace('w=600', 'w=1200')}
+              alt={item.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div
+              className="h-full w-full"
+              style={{ background: item.gradient }}
+            />
+          )}
         </div>
 
         {/* Caption */}
